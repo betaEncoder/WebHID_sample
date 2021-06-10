@@ -9,25 +9,48 @@
 <body>
 <main>
   <h1>WebHID Sample</h1>
-  <button>refresh</button>
+  <div id="check-supported">check if the WebHID API is supported...</div><br />
+  <button id="connect-button" disabled=true>Connect</button><br />
+  Device details<div id="device-details" style="border-style: solid; border-width: 1px;"></div><br />
+  <button id="start-button">start</button><br />
+  <input type="text">
 </main>
 
 <script>
-console.log('GitHub Pages Sample');
+let device;
+async function connectDevice(){
+    const devices = await navigator.hid.requestDevice({ filters: [] });
+    device = devices[0];
+    
+    let detail = document.getElementById("device-details");
+    detail.innerText = "Device.productName: " + device.productName + "\r";
+    detail.innerText += "Device.vendorId: 0x" + device.vendorId.toString(16) + "\r";
+    detail.innerText += "Device.productId: 0x" + device.productId.toString(16) + "\r";
 
-document.addEventListener('DOMContentLoaded', async () => {
-  let devices = await navigator.hid.getDevices();
-  devices.forEach(device => {
-    console.log(`HID: ${device.productName}`);
-  });
+    navigator.hid.addEventListener('connect', ({device}) => {
+    console.log(`HID connected: ${device.productName}`);
+    });
+    navigator.hid.addEventListener('disconnect', ({device}) => {
+    console.log(`HID disconnected: ${device.productName}`);
+    });
+}
+
+document.querySelector("#connect-button").addEventListener("click", connectDevice);
+
+document.addEventListener('DOMContentLoaded', () => {
+    const field = document.getElementById("check-supported");
+    if ("hid" in navigator) {
+        // The WebHID API is supported.
+        field.innerHTML += "<b>Your browser supports Web HID API</b>";
+        document.getElementById("connect-button").disabled = false;
+    }else{
+        field.innerHTML += "Your browser <b>not</b> support Web HID API";
+    }
 });
 
-navigator.hid.addEventListener('connect', ({device}) => {
-  console.log(`HID connected: ${device.productName}`);
-});
 
-navigator.hid.addEventListener('disconnect', ({device}) => {
-  console.log(`HID disconnected: ${device.productName}`);
+document.querySelector("#start-button").addEventListener("click", async () => {
+  const device = await navigator.hid.requestDevice({ filters: [] });
 });
 </script>
 </body>
